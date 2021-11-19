@@ -1,4 +1,5 @@
 <?php
+
 namespace Neos\ContentRepository\Search\Indexer;
 
 /*
@@ -14,6 +15,7 @@ namespace Neos\ContentRepository\Search\Indexer;
 use Neos\Eel\Utility as EelUtility;
 use Neos\Flow\Annotations as Flow;
 use Neos\Flow\Configuration\ConfigurationManager;
+use Neos\Flow\Configuration\Exception\InvalidConfigurationTypeException;
 use Neos\Flow\ObjectManagement\ObjectManagerInterface;
 use Neos\ContentRepository\Domain\Model\NodeInterface;
 use Neos\ContentRepository\Search\Exception\IndexingException;
@@ -52,7 +54,7 @@ abstract class AbstractNodeIndexer implements NodeIndexerInterface
      * Called by the Flow object framework after creating the object and resolving all dependencies.
      *
      * @param integer $cause Creation cause
-     * @throws \Neos\Flow\Configuration\Exception\InvalidConfigurationTypeException
+     * @throws InvalidConfigurationTypeException
      */
     public function initializeObject($cause)
     {
@@ -95,7 +97,7 @@ abstract class AbstractNodeIndexer implements NodeIndexerInterface
      * @throws \Neos\ContentRepository\Exception\NodeException
      * @throws \Neos\Eel\Exception
      */
-    protected function extractFulltext(NodeInterface $node, $propertyName, $fulltextExtractionExpression, array &$fulltextIndexOfNode)
+    protected function extractFulltext(NodeInterface $node, $propertyName, $fulltextExtractionExpression, array &$fulltextIndexOfNode): void
     {
         if ($fulltextExtractionExpression !== '') {
             $extractedFulltext = $this->evaluateEelExpression($fulltextExtractionExpression, $node, $propertyName, ($node->hasProperty($propertyName) ? $node->getProperty($propertyName) : null));
@@ -108,7 +110,11 @@ abstract class AbstractNodeIndexer implements NodeIndexerInterface
                 if (!isset($fulltextIndexOfNode[$bucket])) {
                     $fulltextIndexOfNode[$bucket] = '';
                 }
-                $fulltextIndexOfNode[$bucket] .= ' ' . $value;
+
+                $value = trim($value);
+                if ($value !== '') {
+                    $fulltextIndexOfNode[$bucket] .= ' ' . $value;
+                }
             }
         }
         // TODO: also allow fulltextExtractor in settings!!
